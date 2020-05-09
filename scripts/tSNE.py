@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from sklearn import metrics
 from train_detector import get_angle_threshold, estimate_neighbor_acc_by_threshold
 
+
 def run_tSNE(natural_embed, n_jobs, perplexity):
     '''
     The GPU version requires CUDA 9.0 and install the tsnecuda package by running
@@ -61,7 +62,7 @@ if __name__ == '__main__':
     assert dataset in ['cifar10', 'svhn', 'fmnist', 'simulation']
 
     if dataset == 'simulation':
-        transformation_mode = 'foggy_rainy_automold'
+        transformation_mode = 'rainy_foggy_automold'
     else:
         transformation_mode = 'random_rotate_and_shift'
 
@@ -93,10 +94,20 @@ if __name__ == '__main__':
     n = d['test_embed'].shape[0]
     th = int(n * sample_rate)
 
-    test_embed = d['test_embed'][:th]
-    test_y = d['test_y'][:th]
-    test_y_pred = d['test_y_pred'][:th]
-    test_neighbor_avg_acc = d['test_neighbor_avg_acc'][:th]
+    test_embed = d['test_embed']
+    test_y = d['test_y']
+    test_y_pred = d['test_y_pred']
+
+    if dataset == 'simulation':
+        angle_threshold = get_angle_threshold(path_train_embed_and_neighbor_acc)
+        test_neighbor_avg_acc = estimate_neighbor_acc_by_threshold(angle_threshold, test_y, test_y_pred)
+    else:
+        test_neighbor_avg_acc = d['test_neighbor_avg_acc'][:th]
+        angle_threshold = 1
+    test_embed = test_embed[:th]
+    test_y = test_y[:th]
+    test_y_pred = test_y_pred[:th]
+    print(test_neighbor_avg_acc.shape)
 
     print('number of points :', n)
 
@@ -108,26 +119,21 @@ if __name__ == '__main__':
         objects = [str(i) for i in range(10)]
 
     if vis_mode == '3d_tsne':
-        if dataset in ['simulation']:
-            angle_threshold = get_angle_threshold(path_train_embed_and_neighbor_acc)
-            test_neighbor_avg_acc = estimate_neighbor_acc_by_threshold(angle_threshold, test_y, test_y_pred)
-        else:
-            angle_threshold = 1
 
         remaining_idx = np.where((test_y - test_y_pred)**2 < angle_threshold)[0]
-        print(remaining_idx.shape)
-        idx = np.random.choice(test_neighbor_avg_acc.shape[0], 1000)
+        print(np.mean(test_neighbor_avg_acc))
+        print(len(remaining_idx))
+        print(np.mean(test_neighbor_avg_acc[remaining_idx]))
+        idx = remaining_idx
+        print(np.mean(test_neighbor_avg_acc[idx]>0.75))
         x = run_tSNE(test_embed, n_jobs, perplexity)
         x = x[idx]
-        from mpl_toolkits.mplot3d import Axes3D
-        from matplotlib import cm
 
 
-        fig = plt.figure()
-        ax = Axes3D(fig)
-        surf = ax.plot_trisurf(x[:, 0], x[:, 1], test_neighbor_avg_acc[idx], cmap=cm.jet.reversed(), linewidth=0.1)
-        fig.colorbar(surf, shrink=0.5, aspect=5)
-        plt.savefig('tsne/'+dataset+'_'+architecture+'_3d_sdc_.pdf')
+        fig, ax = plt.subplots()
+        sc = plt.scatter(x[:, 0], x[:, 1], c=test_neighbor_avg_acc[idx], cmap=plt.cm.get_cmap('jet').reversed(), linewidth=0.1)
+        plt.colorbar(sc)
+        plt.savefig('tsne/'+dataset+'_'+architecture+'_sdc_.pdf')
         plt.show()
 
 
