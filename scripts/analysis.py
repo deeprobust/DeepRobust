@@ -37,7 +37,7 @@ def get_si(d, example_num, mode_str, num_of_transformation=None):
         si_arr[ii] = si
     return si_arr
 
-task = 'roc_using_si_and_top1'
+task = 'spearmanr_si_neighbor_acc_wrt_neighbor_num'
 
 if task == 'roc_using_si_and_top1':
     roc_data = dict()
@@ -612,6 +612,12 @@ if task == 'roc_using_si_and_top1':
 
 
 if task == 'spearmanr_si_neighbor_acc_wrt_neighbor_num':
+
+
+
+
+
+
     fig, ax = plt.subplots(1, 1, figsize=(12,12))
 
     colors = ['black', 'gray', 'rosybrown', 'red', 'darkcyan', 'gold', 'green', 'blue', 'purple']
@@ -627,6 +633,14 @@ if task == 'spearmanr_si_neighbor_acc_wrt_neighbor_num':
     ax.set_ylabel('Spearman corrleation coeff', fontsize=40)
     ax.tick_params(labelsize=40)
     ax.legend(prop=dict(size=40))
+
+    # code for legend outside
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    # Put a legend to the right of the current axis
+    ax.legend(prop=dict(size=40), loc='center left', bbox_to_anchor=(1, 0.5))
+    # ----------------------------
     ax.axvline(x=15, ymin=0, ymax=1, linestyle='--')
     if not os.path.exists('tmp_img'):
         os.mkdir('tmp_img')
